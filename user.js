@@ -30,23 +30,6 @@ module.exports = function(cms){
     ext.config.local.iterations = ext.config.local.iterations || 25000;
     ext.config.local.keylen = ext.config.local.keylen || 512;
     ext.config.local.encoding = ext.config.local.encoding || "hex";
-    
-    ext.config.oauths = ext.config.oauths || {};
-    
-    // Oauths
-    // Facebook
-    ext.config.oauths.facebook = ext.config.oauths.facebook || {};
-    ext.config.oauths.facebook.clientId = ext.config.oauths.facebook.clientId || null;
-    ext.config.oauths.facebook.clientSecret = ext.config.oauths.facebook.clientSecret || null;
-    ext.config.oauths.facebook.callbackUrl = ext.config.oauths.facebook.callbackUrl || null; // ext->server->protokol+hostname+port/ oauthRoute + "/facebook/callback"
-    ext.config.oauths.facebook.initUrl = ext.config.oauths.facebook.initUrl || null; // ext->server->protokol+hostname+port/ oauthRoute + "/facebook/callback"
-
-    // Google
-    ext.config.oauths.google = ext.config.oauths.google || {};
-    ext.config.oauths.google.clientId = ext.config.oauths.google.clientId || null;
-    ext.config.oauths.google.clientSecret = ext.config.oauths.google.clientSecret || null;
-    ext.config.oauths.google.callbackUrl = ext.config.oauths.google.callbackUrl || null; // ext->server->protokol+hostname+port/ oauthRoute + "/google/callback"
-    ext.config.oauths.google.initUrl = ext.config.oauths.google.initUrl || null; // ext->server->protokol+hostname+port/ oauthRoute + "/google/callback"
 
     //# Declarations and settings:
     ext.logger = cms.getExtension("winston").createLogger(ext.name, ext.config.logger);
@@ -261,14 +244,23 @@ module.exports = function(cms){
   };
 
 //# Public declarations and exports:
-  ext.checkAuthentication = function(req, authCb, unauthCb, opts){
+  ext.checkAuthentication = function(req, res, authCb, unauthCb, opts){
     opts = opts || {};
     if(req.user) return proofUser(req.user, opts, authCb, unauthCb);
     else { // !req.user
       if(req.method === "POST") {
         return bodyParser.urlencoded({extended:false})(req, null, function(err){
           if (err) return next(err);
-          if(!req.body || !req.body[ext.config.local.usernameField] || !req.body[ext.config.local.passwordField]) return unauthCb();
+          if(!req.body) return unauthCb();
+          if(req.body.strategy) {
+            if(passportStrategies[req.body.strategy]) {
+              ext.logger.verbose("Authenticating with strategy '"+req.body.strategy+"'");
+              return passport.authenticate(req.body.strategy)(req, res);
+            }
+            ext.logger.warn("Try to authenticate with unknown strategy '"+req.body.strategy+"'", req);
+          }
+          
+          if(!req.body[ext.config.local.usernameField] || !req.body[ext.config.local.passwordField]) return unauthCb();
           ext.model.authenticate(req.body[ext.config.local.usernameField], req.body[ext.config.local.passwordField],function(err, user){
             if(err) return unauthCb(err);
             if(!user) ext.logger.warn("Wrong user credentials!")
