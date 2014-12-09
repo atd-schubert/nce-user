@@ -101,7 +101,6 @@ module.exports = function(cms){
         var hash = new Buffer(hashRaw, 'binary').toString(ext.config.local.encoding);
     
         if (hash === self.get('password')) {
-          ext.logger.verbose("User '"+self.username+"' authenticated.");
           return cb(null, self);
         } else {
           return cb(new Error('incorrect Password'));
