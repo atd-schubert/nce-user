@@ -64,7 +64,7 @@ describe('Basic functions in NCE', function(){
         return done(new Error("Create a user twice!"));
       });
     });
-    it('should not be able to get a user', function(done){
+    it('should be able to get a user', function(done){
       var user = {
         username: "test",
         email:"ich@was.de"
@@ -109,7 +109,7 @@ describe('Basic functions in NCE', function(){
       });
     });
   });
-  
+  /*
   describe('Use the middleware for authentication', function(){
     var user = {
       username: "test",
@@ -123,8 +123,8 @@ describe('Basic functions in NCE', function(){
     nce.requestMiddlewares.push(function(req, res, next){
       if(req.url === "/auth") ext.checkAuthentication(req, function(err, user){cbs.isAuth(err, user);}, function(err, user){cbs.isNotAuth(err, user);});
       if(req.url === "/test") ext.checkAuthentication(req, function(err, user){cbs.isAuth(err, user);}, function(err, user){cbs.isNotAuth(err, user);}, {username:"test"});
-    });
-    testExt = nce.createExtension({package:{name:"testing"}});
+    });/*
+    var testExt = nce.createExtension({package:{name:"testing"}});
     ext.createUser(user, function(err){
       if(err) return ext.logger.error("Error in creating a new user");
       
@@ -132,7 +132,7 @@ describe('Basic functions in NCE', function(){
       
       
     });
-  });
+  });*/
 });
 
 /*

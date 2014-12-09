@@ -8,7 +8,7 @@ var Store = require("nce-mongoose-store");
 var Server = require("nce-server");
 
 // Load core and insert user extension
-var nce = new NCE();
+var nce = new NCE({server:{logger:{level:1}}});
 var ext = Ext(nce);
 
 // activate minimum required extensions
@@ -42,13 +42,14 @@ ext.createUser(user, function(err){if(err) ext.logger.error(err)});
 nce.requestMiddlewares.push(function(req, res, next){
   if(req.url === "/") {
     res.writeHead(200, {"content-type":"text/plain"});
+    if(req.user && req.user.username) res.write("You are logged in as "+req.user.username+"\n");
     res.end("Index...")
   }
   if(req.url === "/auth") return ext.checkAuthentication(req, function(err, user){
     // Authenticated
     if(err) return next(err);
     res.writeHead(200, {"content-type": "text/plain"});
-    return res.end("You are logged in");
+    return res.end("You are logged in as "+req.user.username);
   }, function(err, user){
     // Not authenticated
     if(err) return next(err);
@@ -63,7 +64,7 @@ nce.requestMiddlewares.push(function(req, res, next){
     // Authenticated
     if(err) return next(err);
     res.writeHead(200, {"content-type": "text/plain"});
-    return res.end("You are logged in");
+    return res.end("You are logged in as "+req.user.username);
   }, function(err, user){
     // Not authenticated
     if(err) return next(err);
@@ -76,8 +77,13 @@ nce.requestMiddlewares.push(function(req, res, next){
   }, {username:"test"});
   if(req.url === "/logout") {
     req.logout();
-    res.writeHead(301, {location:"/"});
+    console.log(req.logout.toString());
+    //res.writeHead(200, {"content-type": "text/plain"});
+    //res.end("You are logged out...");
+    res.writeHead(302, {"location": "/"});
     res.end();
   }
   return next();
 });
+
+module.exports = nce;
