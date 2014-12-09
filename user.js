@@ -307,7 +307,7 @@ module.exports = function(cms){
       return cb(err, doc);
     });
   };
-  ext.addStrategy = function(strategy){
+  ext.useStrategy = function(strategy){
     if(!strategy.name) throw new Error("Your strategy has no name! Maybe it is not a correct Strategy!");
     if(passportStrategies[strategy.name]) throw new Error("Your already use a strategy with the name '"+strategy.name+"'!");
     
