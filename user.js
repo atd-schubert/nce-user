@@ -20,6 +20,7 @@ module.exports = function(cms){
     ext.config.logger = ext.config.logger || {};
     
     ext.config.authenticationCallbackURL = ext.config.authenticationCallbackURL || "/authcb";
+    ext.config.defaultAdminPassword = ext.config.defaultAdminPassword || false;
     ext.config.modelName = ext.config.modelName || ext.name;
     
     ext.config.local = ext.config.local || {};
@@ -141,7 +142,7 @@ module.exports = function(cms){
     ext.model.findOne({username:"admin"}, function(err, doc){
       if(err) ext.logger.error(err);
       if(!doc) {
-        var passwd = crypto.randomBytes(32).toString('hex');
+        var passwd = ext.config.defaultAdminPassword || crypto.randomBytes(32).toString('hex');
         ext.logger.warn("There is no admin! Create one with password '"+passwd+"'.");
         var admin = {
           username:"admin",
