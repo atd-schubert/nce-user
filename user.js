@@ -19,7 +19,7 @@ module.exports = function(cms){
     //# Seting extension-config:
     ext.config.logger = ext.config.logger || {};
     
-    ext.config.oauthRoute = ext.config.oauthRoute || "/oauth";
+    ext.config.authenticationCallbackURL = ext.config.authenticationCallbackURL || "/authcb";
     ext.config.modelName = ext.config.modelName || ext.name;
     
     ext.config.local = ext.config.local || {};
@@ -101,6 +101,7 @@ module.exports = function(cms){
         var hash = new Buffer(hashRaw, 'binary').toString(ext.config.local.encoding);
     
         if (hash === self.get('password')) {
+          ext.logger.verbose("User '"+self.username+"' authenticated.");
           return cb(null, self);
         } else {
           return cb(new Error('incorrect Password'));
@@ -189,6 +190,7 @@ module.exports = function(cms){
       });
     });
     passport.use(localStrategy);
+    passportStrategies[localStrategy.name] = localStrategy;
   });
   
   ext.on("deactivate", function(event){ // undo activation
@@ -198,11 +200,26 @@ module.exports = function(cms){
   });
   
   //# Private declarations:
+  var passportStrategies = {};
+  
   var router = function(req, res, next){
     return passport.initialize()(req, res, function(err){
       if(err) return next(err);
       passport.session()(req, res, function(err){
         if(err) return next(err);
+        if(req.url.substr(0, ext.config.authenticationCallbackURL.length) === ext.config.authenticationCallbackURL) {
+          var strategyName = req.url.substr(ext.config.authenticationCallbackURL.length).split("/")[1];
+          
+          ext.logger.verbose("Authentication callback for "+strategyName);
+          if(req.user) ext.logger.info("Logged User '"+(req.user.username || req.user.email)+"' uses the authentication callback '"+strategyName+"'");
+          
+          if(passportStrategies[strategyName]) return passport.authenticate(strategyName)(req, res, function(err){
+            if(err) return next(err);
+            if(req.user) ext.logger.info("Logged User '"+(req.user.username || req.user.email)+"' was authenticated by '"+strategyName+"'");
+            
+          });
+          else ext.logger.warn("Try to authenticate with unknown strategy '"+strategyName+"'");
+        }
         return next();
       });
     });
@@ -224,21 +241,21 @@ module.exports = function(cms){
       else if(typeof opts.email === "string" && opts.email === user.email) return authCb(null, user);
       else if(Array.prototype.isPrototypeOf(opts.email) && opts.email.indexOf(user.email) >= 0) return authCb(null, user);
     }
-    if(opts.group) {
-      if(RegExp.prototype.isPrototypeOf(opts.group)) {
+    if(opts.usergroups) {
+      if(RegExp.prototype.isPrototypeOf(opts.usergroups)) {
         var i;
-        for (i=0; i<user.group.length; i++) if(opts.group.test(user.group[i])) return authCb(null, user);
+        for (i=0; i<user.usergroups.length; i++) if(opts.usergroups.test(user.usergroups[i])) return authCb(null, user);
         return unauthCb(null, user);
-      } else if(typeof opts.group === "string") {
-        if(user.group.indexOf(opts.group)>=0) return authCb(null, user);
+      } else if(typeof opts.usergroups === "string") {
+        if(user.usergroups.indexOf(opts.usergroups)>=0) return authCb(null, user);
         else return unauthCb(null, user);
-      } else if(Array.prototype.isPrototypeOf(opts.group)) {
-        for (i=0; i<user.group.length; i++) if(opts.group.indexOf(user.group[i])) return authCb(null, user);
-        if(opts.group.indexOf(user.group) >= 0) return authCb(null, user);
+      } else if(Array.prototype.isPrototypeOf(opts.usergroups)) {
+        for (i=0; i<user.usergroups.length; i++) if(opts.usergroups.indexOf(user.usergroups[i])) return authCb(null, user);
+        if(opts.usergroups.indexOf(user.usergroups) >= 0) return authCb(null, user);
         else return unauthCb(null, user);
       }
     }
-    if(opts.id || opts.username || opts.email || opts.group) return unauthCb(null, user);
+    if(opts.id || opts.username || opts.email || opts.usergroups) return unauthCb(null, user);
     return authCb(null, user);
   };
 
@@ -289,6 +306,12 @@ module.exports = function(cms){
       return cb(err, doc);
     });
   };
-  
+  ext.addStrategy = function(strategy){
+    if(!strategy.name) throw new Error("Your strategy has no name! Maybe it is not a correct Strategy!");
+    if(passportStrategies[strategy.name]) throw new Error("Your already use a strategy with the name '"+strategy.name+"'!");
+    
+    passport.use(strategy);
+    passportStrategies[strategy.name] = strategy;
+  };
   return ext;
 }
