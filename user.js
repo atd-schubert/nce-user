@@ -298,13 +298,17 @@ module.exports = function(nce){
     data.timestamp.created = new Date();
     ext.model.createUser(data, function(err, doc){
       if(!err) ext.logger.info("Created user '"+(doc.username || doc.email)+"'");
-      else ext.logger.error("Error while creating user '"+(data.username || data.email)+"'", err);
+      else {
+        ext.logger.error("Error while creating user '"+(data.username || data.email)+"'", err);
+        ext.emit("create", doc);
+      }
       return cb(err, doc);
     });
   };
   ext.removeUser = function(id, cb){
     ext.model.remove(id, function(err){
       if(!err) ext.logger.info("Droped userId '"+id+"'");
+      ext.emit("remove", id);
       return cb(err);
     });
   };
@@ -314,6 +318,7 @@ module.exports = function(nce){
   ext.updateUser = function(query, data, cb){
     ext.model.findOneAndUpdate(query, data, function(err, doc){
       if(!err) ext.logger.info("Updated user '"+(doc.username || doc.email)+"'");
+      ext.emit("update", doc);
       return cb(err, doc);
     });
   };
@@ -323,6 +328,7 @@ module.exports = function(nce){
     
     passport.use(strategy);
     passportStrategies[strategy.name] = strategy;
+    ext.emit("use", strategy);
   };
   return ext;
 }
