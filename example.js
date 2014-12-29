@@ -6,9 +6,25 @@ var Ext = require("./");
 var Logger = require("nce-winston");
 var Store = require("nce-mongoose-store");
 var Server = require("nce-server");
+var FacebookStrategy = require('passport-facebook').Strategy;
+
+var fbs = new FacebookStrategy({
+    clientID: "768309759887321",
+    clientSecret: "50affbbb5583a725686be6a832c96314",
+    callbackURL: "http://localhost:3000/auth/facebook"
+  },
+  function(accessToken, refreshToken, profile, done) {
+    console.log(accessToken, refreshToken, profile);
+    return done(null, user);
+    /*User.findOrCreate(..., function(err, user) {
+      if (err) { return done(err); }
+      done(null, user);
+    });*/
+  }
+);
 
 // Load core and insert user extension
-var nce = new NCE({server:{logger:{level:1}}});
+var nce = new NCE({user:{defaultAdminPassword: "admin!23",logger:{level:"verbose"}}});
 var ext = Ext(nce);
 
 // activate minimum required extensions
@@ -39,51 +55,47 @@ var user = {
 };
 ext.createUser(user, function(err){if(err) ext.logger.error(err)});
 
+// ext.useStrategy(fbs);
+
 nce.requestMiddlewares.push(function(req, res, next){
   if(req.url === "/") {
     res.writeHead(200, {"content-type":"text/plain"});
-    if(req.user && req.user.username) res.write("You are logged in as "+req.user.username+"\n");
     res.end("Index...")
   }
-  if(req.url === "/auth") return ext.checkAuthentication(req, function(err, user){
+  if(req.url === "/auth") return ext.checkAuthentication(req, res, function(err, user){
     // Authenticated
     if(err) return next(err);
     res.writeHead(200, {"content-type": "text/plain"});
-    return res.end("You are logged in as "+req.user.username);
+    return res.end("You are logged in");
   }, function(err, user){
     // Not authenticated
     if(err) return next(err);
     if(!user) {
       res.writeHead(403, {"content-type":"text/html"});
-      return res.end('<html><body><form action="'+req.url+'" method="POST"><input type="text" name="username" placeholder="username"/><input type="password" name="password" placeholder="password"/><input type="submit" value="Login"/></form></body></html>');
+      return res.end('<html><body><form action="'+req.url+'" method="POST"><input type="hidden" name="strategy" value="facebook"/><input type="submit" value="Login with Facebook"/></form><form action="'+req.url+'" method="POST"><input type="text" name="username" placeholder="username"/><input type="password" name="password" placeholder="password"/><input type="submit" value="Login"/></form></body></html>');
     }
     res.writeHead(403, {"content-type": "text/plain"});
     return res.end("You are not allowed to access this resource");
   });
-  if(req.url === "/test") return ext.checkAuthentication(req, function(err, user){
+  if(req.url === "/test") return ext.checkAuthentication(req, res, function(err, user){
     // Authenticated
     if(err) return next(err);
     res.writeHead(200, {"content-type": "text/plain"});
-    return res.end("You are logged in as "+req.user.username);
+    return res.end("You are logged in");
   }, function(err, user){
     // Not authenticated
     if(err) return next(err);
     if(!user) {
       res.writeHead(403, {"content-type":"text/html"});
-      return res.end('<html><body><form action="'+req.url+'" method="POST"><input type="text" name="username" placeholder="username"/><input type="password" name="password" placeholder="password"/><input type="submit" value="Login"/></form></body></html>');
+      return res.end('<html><body><form action="'+req.url+'" method="POST"><input type="hidden" name="strategy" value="facebook"/><input type="submit" value="Login with Facebook"/></form><form action="'+req.url+'" method="POST"><input type="text" name="username" placeholder="username"/><input type="password" name="password" placeholder="password"/><input type="submit" value="Login"/></form></body></html>');
     }
     res.writeHead(403, {"content-type": "text/plain"});
     return res.end("You are not allowed to access this resource");
-  }, {username:"test"});
+  }, {username:"test", usergroups:"admin"});
   if(req.url === "/logout") {
     req.logout();
-    console.log(req.logout.toString());
-    //res.writeHead(200, {"content-type": "text/plain"});
-    //res.end("You are logged out...");
-    res.writeHead(302, {"location": "/"});
+    res.writeHead(301, {location:"/"});
     res.end();
   }
   return next();
 });
-
-module.exports = nce;

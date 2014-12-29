@@ -1,21 +1,18 @@
 "use strict";
 
-var fs = require("fs");
 var bodyParser = require("body-parser");
 var crypto = require("crypto");
 
 var passport = require("passport");
-var FacebookStrategy = require('passport-facebook').Strategy;
-var GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
 var LocalStrategy = require('passport-local').Strategy;
 
-module.exports = function(cms){
-  if(!cms) throw new Error("You have to specify the cms object");
+module.exports = function(nce){
+  if(!nce) throw new Error("You have to specify the nce object");
   
 //# Mandantory Setup:
-  var ext = cms.createExtension({package: require("./package.json")});
+  var ext = nce.createExtension({package: require("./package.json")});
   
-  ext.on("install", function(event){ // set options, but don't run or make available in cms
+  ext.on("install", function(event){ // set options, but don't run or make available in nce
     //# Seting extension-config:
     ext.config.logger = ext.config.logger || {};
     
@@ -32,9 +29,9 @@ module.exports = function(cms){
     ext.config.local.encoding = ext.config.local.encoding || "hex";
 
     //# Declarations and settings:
-    ext.logger = cms.getExtension("winston").createLogger(ext.name, ext.config.logger);
+    ext.logger = nce.getExtension("winston").createLogger(ext.name, ext.config.logger);
     
-    var store = cms.getExtension("mongoose-store");
+    var store = nce.getExtension("mongoose-store");
     var schema = store.createSchema(require("./user-schema"));
     schema.methods.setPassword = function (password, cb) {
       if (!password) {
@@ -85,12 +82,27 @@ module.exports = function(cms){
         var hash = new Buffer(hashRaw, 'binary').toString(ext.config.local.encoding);
     
         if (hash === self.get('password')) {
-          ext.logger.verbose("User '"+self.username+"' authenticated.");
-          return cb(null, self);
+          self.timestamp.last = new Date();
+          ext.logger.verbose("User '"+self.username+"' authenticated.", self.timestamp.last);
+          cb(null, self);
+          
+          self.save(function(err){
+            if(err) ext.logger.error("Error while saving last login timestamp", err);
+          });
+          return;
         } else {
-          return cb(new Error('incorrect Password'));
+          return cb(new Error("Incorrect Password for user '"+(self.username || self.email)+"'"));
         }
       });
+    };
+    schema.methods.setAdditionalValue = function (name, value, cb) {
+      this.additional[name] = value;
+      this.save(cb);
+    };
+    schema.methods.getAdditionalValue = function (name, value, cb) {
+      cb = cb || function(){};
+      cb(null, this.additional[name]);
+      return this.additional[name];
     };
     schema.statics.authenticate = function (username, password, cb) {
       var self = this;
@@ -149,12 +161,15 @@ module.exports = function(cms){
   
   ext.on("uninstall", function(event){ // undo installation
     //# Undeclare:
-    
+    nce.getExtension("winston").removeLogger(ext.name);
+    nce.getExtension("mongoose-store").removeModel(ext.config.modelName);
+    delete ext.model;
+    delete ext.logger;
   });
   
-  ext.on("activate", function(event){ // don't set options, just run, make available in cms or register.
-	  if(cms.requestMiddlewares.indexOf(router) === -1) {
-		  cms.requestMiddlewares.push(router);
+  ext.on("activate", function(event){ // don't set options, just run, make available in nce or register.
+	  if(nce.requestMiddlewares.indexOf(router) === -1) {
+		  nce.requestMiddlewares.push(router);
 	  }
     var localStrategy = new LocalStrategy({
       // by default, local strategy uses username and password, we will override with email
@@ -178,8 +193,8 @@ module.exports = function(cms){
   });
   
   ext.on("deactivate", function(event){ // undo activation
-	  if(cms.requestMiddlewares.indexOf(router) !== -1) {
-		  cms.requestMiddlewares.splice(cms.requestMiddlewares.indexOf(router), 1);
+	  if(nce.requestMiddlewares.indexOf(router) !== -1) {
+		  nce.requestMiddlewares.splice(nce.requestMiddlewares.indexOf(router), 1);
 	  }
   });
   
@@ -279,8 +294,11 @@ module.exports = function(cms){
     req.logout();
   };
   ext.createUser = function(data, cb){
+    data.timestamp = data.timestamp || {};
+    data.timestamp.created = new Date();
     ext.model.createUser(data, function(err, doc){
       if(!err) ext.logger.info("Created user '"+(doc.username || doc.email)+"'");
+      else ext.logger.error("Error while creating user '"+(data.username || data.email)+"'", err);
       return cb(err, doc);
     });
   };
