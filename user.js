@@ -134,23 +134,6 @@ module.exports = function(nce){
     };
     ext.model = store.createModel(ext.config.modelName, schema);
     
-    ext.model.findOne({username:"admin"}, function(err, doc){
-      if(err) ext.logger.error(err);
-      if(!doc) {
-        var passwd = ext.config.defaultAdminPassword || crypto.randomBytes(32).toString('hex');
-        ext.logger.warn("There is no admin! Create one with password '"+passwd+"'.");
-        var admin = {
-          username:"admin",
-          usergroups: ["admin"],
-          password: passwd
-        };
-        ext.createUser(admin, function(err){
-          if(err) return ext.logger.error(err);
-          ext.logger.warn("User 'admin' created...");
-        });
-      }
-    });
-    
     passport.serializeUser(function(user, done) {
       done(null, user._id);
     });
@@ -171,6 +154,22 @@ module.exports = function(nce){
 	  if(nce.requestMiddlewares.indexOf(router) === -1) {
 		  nce.requestMiddlewares.push(router);
 	  }
+	  ext.model.findOne({username:"admin"}, function(err, doc){
+      if(err) ext.logger.error(err);
+      if(!doc) {
+        var passwd = ext.config.defaultAdminPassword || crypto.randomBytes(32).toString('hex');
+        ext.logger.warn("There is no admin! Create one with password '"+passwd+"'.");
+        var admin = {
+          username:"admin",
+          usergroups: ["admin"],
+          password: passwd
+        };
+        ext.createUser(admin, function(err){
+          if(err) return ext.logger.error(err);
+          ext.logger.warn("User 'admin' created...");
+        });
+      }
+    });
     var localStrategy = new LocalStrategy({
       // by default, local strategy uses username and password, we will override with email
       usernameField: ext.config.local.usernameField,
@@ -297,9 +296,9 @@ module.exports = function(nce){
     data.timestamp = data.timestamp || {};
     data.timestamp.created = new Date();
     ext.model.createUser(data, function(err, doc){
-      if(!err) ext.logger.info("Created user '"+(doc.username || doc.email)+"'");
+      if(err) ext.logger.error("Error while creating user '"+(data.username || data.email)+"'", err);
       else {
-        ext.logger.error("Error while creating user '"+(data.username || data.email)+"'", err);
+        ext.logger.info("Created user '"+(doc.username || doc.email)+"'");
         ext.emit("create", doc);
       }
       return cb(err, doc);

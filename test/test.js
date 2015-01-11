@@ -1,6 +1,7 @@
 "use strict";
 
 var NCE = require("nce");
+var ExtMgr = require("nce-extension-manager");
 var Ext = require("../");
 
 var http = require("http");
@@ -21,20 +22,16 @@ describe('Basic integration in NCE', function(){
 describe('Basic functions in NCE', function(){
   var nce = new NCE();
   var ext = Ext(nce);
-  
-  var logger = Logger(nce);
-  var store = Store(nce);
-  logger.install();
-  logger.activate();
-  store.install();
-  store.activate();
+  var extMgr = ExtMgr(nce);
+  extMgr.activateExtension(extMgr);
   
   it('should be installable', function(done){
-    if(ext.install()) return done();
+    extMgr.getActivatedExtension("mongoose-store");
+    if(extMgr.installExtension(ext)) return done();
     return done(new Error("Can not install extension"));
   });
   it('should be activatable', function(done){
-    if(ext.activate()) return done();
+    if(extMgr.activateExtension(ext)) return done();
     return done(new Error("Can not activate extension"));
   });
   it('should be deactivatable', function(done){
@@ -51,18 +48,13 @@ describe('Basic functions in NCE', function(){
 describe('Extension methods', function(){
   var nce = new NCE({user: {modelName:"test1"}});
   var ext = Ext(nce);
-  
-  var logger = Logger(nce);
-  var store = Store(nce);
-  logger.install();
-  logger.activate();
-  store.install();
-  store.activate();
-  ext.install();
-  ext.activate();
+  var extMgr = ExtMgr(nce);
+  extMgr.activateExtension(extMgr);
+  extMgr.activateExtension(ext);
   
   describe('Create and change users and their settings', function(){
     it('should create a new user', function(done){
+      this.timeout(5000);
       var user = {
         username: "test",
         password: "!234five",
@@ -133,26 +125,19 @@ describe('Extension methods', function(){
 describe('Middleware methods and authentication', function(){
   var nce = new NCE({user: {modelName:"test2"}});
   var ext = Ext(nce);
-  
-  var logger = Logger(nce);
-  var store = Store(nce);
-  logger.install();
-  logger.activate();
-  store.install();
-  store.activate();
-  
-  ext.activate();
-  ext.install();
+  var extMgr = ExtMgr(nce);
+  extMgr.activateExtension(extMgr);
+  extMgr.activateExtension(ext);
   
   http.createServer(nce.middleware).listen(1337);
   
-  ext.createUser({username:"simple", passowrd: "!234five"}, function(err){
+  ext.createUser({username:"simple", password: "!234five"}, function(err){
     if(err) return ext.logger.error(err);
   });
-  ext.createUser({username:"enhanced", passowrd: "!234five", email:"test@test.tdl"}, function(err){
+  ext.createUser({username:"enhanced", password: "!234five", email:"test@test.tdl"}, function(err){
     if(err) return ext.logger.error(err);
   });
-  ext.createUser({username:"group", passowrd: "!234five", usergroups:["first"]}, function(err){
+  ext.createUser({username:"group", password: "!234five", usergroups:["first"]}, function(err){
     if(err) return ext.logger.error(err);
   });
   /*ext.createUser({username:"multiplegroups", passowrd: "!234five", usergroups:["first", "second"]}, function(err){
@@ -268,6 +253,6 @@ describe('Middleware methods and authentication', function(){
 
 /*
   // TODO: 
-  createUser verschiedene mit verschiedenen 
+  createUser 
   
 */
