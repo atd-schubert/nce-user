@@ -137,19 +137,6 @@ describe('Middleware methods and authentication', function(){
   var extMgr = ExtMgr(nce);
   extMgr.activateExtension(extMgr);
   extMgr.activateExtension(ext);
-
-  ext.createUser({username:"simple", password: "!234five"}, function(err){
-    if(err) return ext.logger.error(err);
-  });
-  ext.createUser({username:"enhanced", password: "!234five", email:"test@test.tdl"}, function(err){
-    if(err) return ext.logger.error(err);
-  });
-  ext.createUser({username:"group", password: "!234five", usergroups:["first"]}, function(err){
-    if(err) return ext.logger.error(err);
-  });
-  /*ext.createUser({username:"multiplegroups", passowrd: "!234five", usergroups:["first", "second"]}, function(err){
-    if(err) return ext.logger.error(err);
-  });*/
   
   //# Routes
   //: Informational
@@ -380,9 +367,3 @@ describe('Middleware methods and authentication', function(){
 
 
 });
-
-/*
-  // TODO: 
-  createUser 
-  
-*/
