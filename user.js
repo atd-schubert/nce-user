@@ -24,7 +24,7 @@ module.exports = function(nce){
     ext.config.local = ext.config.local || {};
     ext.config.local.usernameField = ext.config.local.usernameField || "username";
     ext.config.local.passwordField = ext.config.local.passwordField || "password";
-    ext.config.local.saltlen = ext.config.local.saltlen || 32;
+    ext.config.local.saltLength = ext.config.local.saltLength || 32;
     ext.config.local.iterations = ext.config.local.iterations || 25000;
     ext.config.local.keylen = ext.config.local.keylen || 512;
     ext.config.local.encoding = ext.config.local.encoding || "hex";
@@ -55,7 +55,7 @@ module.exports = function(nce){
           
       var self = this;
       
-      crypto.randomBytes(ext.config.local.saltlen, function (err, buf) {
+      crypto.randomBytes(ext.config.local.saltLength, function (err, buf) {
         if (err) return cb(err);
 
         var salt = buf.toString(ext.config.local.encoding);
