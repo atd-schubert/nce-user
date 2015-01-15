@@ -26,7 +26,7 @@ module.exports = function(nce){
     ext.config.local.passwordField = ext.config.local.passwordField || "password";
     ext.config.local.saltLength = ext.config.local.saltLength || 32;
     ext.config.local.iterations = ext.config.local.iterations || 25000;
-    ext.config.local.keylen = ext.config.local.keylen || 512;
+    ext.config.local.keyLength = ext.config.local.keyLength || 512;
     ext.config.local.encoding = ext.config.local.encoding || "hex";
     
     ext.config.passwordComplexity = ext.config.complexity || {
@@ -59,7 +59,7 @@ module.exports = function(nce){
         if (err) return cb(err);
 
         var salt = buf.toString(ext.config.local.encoding);
-        crypto.pbkdf2(password, salt, ext.config.local.iterations, ext.config.local.keylen, function (err, hashRaw) {
+        crypto.pbkdf2(password, salt, ext.config.local.iterations, ext.config.local.keyLength, function (err, hashRaw) {
           if (err) return cb(err);
 
           self.set('password', new Buffer(hashRaw, 'binary').toString(ext.config.local.encoding));
@@ -74,7 +74,7 @@ module.exports = function(nce){
 
       if (!this.get('salt')) return cb(new Error('No Saltvalue'));
 
-      crypto.pbkdf2(password, this.get('salt'), ext.config.local.iterations, ext.config.local.keylen, function (err, hashRaw) {
+      crypto.pbkdf2(password, this.get('salt'), ext.config.local.iterations, ext.config.local.keyLength, function (err, hashRaw) {
         if (err) return cb([err.message]);
 
         var hash = new Buffer(hashRaw, 'binary').toString(ext.config.local.encoding);
