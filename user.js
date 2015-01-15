@@ -2,6 +2,7 @@
 
 var bodyParser = require("body-parser");
 var crypto = require("crypto");
+var complexity = require("complexity");
 
 var passport = require("passport");
 var LocalStrategy = require('passport-local').Strategy;
@@ -27,6 +28,17 @@ module.exports = function(nce){
     ext.config.local.iterations = ext.config.local.iterations || 25000;
     ext.config.local.keylen = ext.config.local.keylen || 512;
     ext.config.local.encoding = ext.config.local.encoding || "hex";
+    
+    ext.config.passwordComplexity = ext.config.complexity || {
+      uppercase    : 1,  // A through Z
+      lowercase    : 1,  // a through z
+      special      : 1,  // ! @ # $ & *
+      digit        : 1,  // 0 through 9
+      alphaNumeric : 1,  // a through Z
+      min          : 8,  // minumum number of characters
+      //max          : 16, // silly idea to have maximum...
+      //exact        : 20  // also kinda silly
+    };
 
     //# Declarations and settings:
     ext.logger = nce.getExtension("winston").createLogger(ext.name, ext.config.logger);
@@ -37,55 +49,41 @@ module.exports = function(nce){
       if (!password) {
         return cb(new Error('Missing password'));
       }
-      if (password.length < 8) {
-        // NOTE: if needed extend this with custom configurable validators, use https://www.npmjs.org/package/complexity
-        return cb(new Error('Password too short, minimum 8 characters'));
+      if (!complexity.check(password, ext.config.complexity)) {
+        return cb(new Error('Your password is not complex enough'));
       }
-      if (/^[a-zA-Z0-9]{1,15}$/.test(password)) {
-        // NOTE: if needed extend this with custom configurable validators, use https://www.npmjs.org/package/complexity
-        return cb(new Error('Password have no special characters.'));
-      }
-    
+          
       var self = this;
       
       crypto.randomBytes(ext.config.local.saltlen, function (err, buf) {
-        if (err) {
-          return cb(err);
-        }
-    
+        if (err) return cb(err);
+
         var salt = buf.toString(ext.config.local.encoding);
-    
         crypto.pbkdf2(password, salt, ext.config.local.iterations, ext.config.local.keylen, function (err, hashRaw) {
-          if (err) {
-            return cb(err);
-          }
-    
+          if (err) return cb(err);
+
           self.set('password', new Buffer(hashRaw, 'binary').toString(ext.config.local.encoding));
           self.set('salt', salt);
-          
+
           cb(null, self);
         });
       });
     };
     schema.methods.authenticate = function (password, cb) {
       var self = this;
-    
-      if (!this.get('salt')) {
-        return cb(new Error('No Saltvalue'));
-      }
-    
+
+      if (!this.get('salt')) return cb(new Error('No Saltvalue'));
+
       crypto.pbkdf2(password, this.get('salt'), ext.config.local.iterations, ext.config.local.keylen, function (err, hashRaw) {
-        if (err) {
-          return cb([err.message]);
-        }
-    
+        if (err) return cb([err.message]);
+
         var hash = new Buffer(hashRaw, 'binary').toString(ext.config.local.encoding);
-    
+
         if (hash === self.get('password')) {
           self.timestamp.last = new Date();
           ext.logger.verbose("User '"+self.username+"' authenticated.", self.timestamp.last);
           cb(null, self);
-          
+  
           self.save(function(err){
             if(err) ext.logger.error("Error while saving last login timestamp", err);
           });
@@ -109,18 +107,11 @@ module.exports = function(nce){
       var query;
       if(/^([\w-\.]+@([\w-]+\.)+[\w-]{2,4})?$/.test(username)) query = {email: username};
       else query = {username: username};
-      
+
       self.findOne(query, function (err, user) {
-        if (err) {
-          return cb(err);
-        }
-        if (user) {
-          user.authenticate(password, cb);
-          //if (!(user[0] instanceof self)) user = new self(user[0]);
-          //user.authenticate(password, cb);
-        } else {
-          return cb(new Error("Unknown user: '"+username+"'"));
-        }
+        if (err) return cb(err);
+        if (user) user.authenticate(password, cb);
+        else return cb(new Error("Unknown user: '"+username+"'"));
       });
     };
     schema.statics.createUser = function(data, cb) {
@@ -132,8 +123,9 @@ module.exports = function(nce){
         doc.save(cb);
       });
     };
-    ext.model = store.createModel(ext.config.modelName, schema);
     
+    ext.model = store.createModel(ext.config.modelName, schema);
+
     passport.serializeUser(function(user, done) {
       done(null, user._id);
     });
@@ -141,7 +133,7 @@ module.exports = function(nce){
       ext.model.findById(id, done);
     });
   });
-  
+
   ext.on("uninstall", function(event){ // undo installation
     //# Undeclare:
     nce.getExtension("winston").removeLogger(ext.name);
@@ -176,15 +168,11 @@ module.exports = function(nce){
       passwordField: ext.config.local.passwordField,
       //passReqToCallback : true // allows us to pass back the entire request to the callback
     }, function (email, password, done) {
-  
       ext.model.authenticate(email, password, function (err, user) {
-        if (err) {
-          return done(null, false, {
-            message: err.toString()
-          });
-        } else {
-          return done(null, user);
-        }
+        if (err) return done(null, false, {
+          message: err.toString()
+        });
+        else return done(null, user);
       });
     });
     passport.use(localStrategy);
@@ -199,7 +187,7 @@ module.exports = function(nce){
   
   //# Private declarations:
   var passportStrategies = {};
-  
+
   var router = function(req, res, next){
     return passport.initialize()(req, res, function(err){
       if(err) return next(err);
@@ -207,14 +195,13 @@ module.exports = function(nce){
         if(err) return next(err);
         if(req.url.substr(0, ext.config.authenticationCallbackURL.length) === ext.config.authenticationCallbackURL) {
           var strategyName = req.url.substr(ext.config.authenticationCallbackURL.length).split("/")[1];
-          
+
           ext.logger.verbose("Authentication callback for "+strategyName);
           if(req.user) ext.logger.info("Logged User '"+(req.user.username || req.user.email)+"' uses the authentication callback '"+strategyName+"'");
-          
+
           if(passportStrategies[strategyName]) return passport.authenticate(strategyName)(req, res, function(err){
             if(err) return next(err);
             if(req.user) ext.logger.info("Logged User '"+(req.user.username || req.user.email)+"' was authenticated by '"+strategyName+"'");
-            
           });
           else ext.logger.warn("Try to authenticate with unknown strategy '"+strategyName+"'");
         }
@@ -222,7 +209,7 @@ module.exports = function(nce){
       });
     });
   };
-  
+
   var proofUser = function(user, opts, authCb, unauthCb) {
     if(opts.id) {
       if(RegExp.prototype.isPrototypeOf(opts.id) && opts.id.test(user._id.toString())) return authCb(null, user);
@@ -324,7 +311,7 @@ module.exports = function(nce){
   ext.useStrategy = function(strategy){
     if(!strategy.name) throw new Error("Your strategy has no name! Maybe it is not a correct Strategy!");
     if(passportStrategies[strategy.name]) throw new Error("Your already use a strategy with the name '"+strategy.name+"'!");
-    
+
     passport.use(strategy);
     passportStrategies[strategy.name] = strategy;
     ext.emit("use", strategy);

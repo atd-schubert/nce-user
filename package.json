@@ -26,19 +26,20 @@
   "homepage": "https://github.com/atd-schubert/nce-user",
   "dependencies": {
     "body-parser": "^1.9.3",
+    "complexity": "0.0.3",
     "passport": "^0.2.1",
     "passport-local": "^1.0.0"
   },
   "devDependencies": {
-    "nce":">=0.1.0",
-    "nce-winston":">=0.0.2",
+    "nce": ">=0.1.0",
+    "nce-winston": ">=0.0.2",
     "nce-mongoose-store": ">=0.0.2",
-    "nce-extension-manager":">=0.0.1",
+    "nce-extension-manager": ">=0.0.1",
     "request": "^2.51.0"
   },
   "peerDependencies": {
-    "nce":">=0.1.0",
-    "nce-winston":">=0.0.2",
+    "nce": ">=0.1.0",
+    "nce-winston": ">=0.0.2",
     "nce-mongoose-store": ">=0.0.2"
   }
 }
