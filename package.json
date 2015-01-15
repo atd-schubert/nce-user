@@ -34,8 +34,7 @@
     "nce": ">=0.1.0",
     "nce-winston": ">=0.0.2",
     "nce-mongoose-store": ">=0.0.2",
-    "nce-extension-manager": ">=0.0.1",
-    "request": "^2.51.0"
+    "nce-extension-manager": ">=0.0.1"
   },
   "peerDependencies": {
     "nce": ">=0.1.0",

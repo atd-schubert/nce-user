@@ -12,6 +12,7 @@ Integrate in NCE with the [extension-manager](https://github.com/atd-schubert/nc
 var NCE = require("nce");
 var nce = new NCE(/*{}*/);
 var extMgr = require("nce-extension-manager")(nce);
+extMgr.activateExtension(extMgr);
 
 var user = extMgr.getActivatedExtension("user");
 ```
