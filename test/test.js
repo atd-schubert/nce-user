@@ -4,7 +4,7 @@ var NCE = require("nce");
 var ExtMgr = require("nce-extension-manager");
 var Ext = require("../");
 
-describe('Basic integration in NCE', function(){ return;
+describe('Basic integration in NCE', function(){
   var nce = new NCE();
   it('should be insertable into NCE', function(done){
     var ext = Ext(nce);
@@ -12,7 +12,7 @@ describe('Basic integration in NCE', function(){ return;
     return done(new Error("Is not able to insert extension into NCE"));
   });
 });
-describe('Basic functions in NCE', function(){ return;
+describe('Basic functions in NCE', function(){
   var nce = new NCE();
   var ext = Ext(nce);
   var extMgr = ExtMgr(nce);
@@ -54,7 +54,7 @@ describe('Basic functions in NCE', function(){ return;
   });
 });
 
-describe('Extension methods', function(){ return;
+describe('Extension methods', function(){
   var nce = new NCE({user: {modelName:"test1"}});
   var ext = Ext(nce);
   var extMgr = ExtMgr(nce);
