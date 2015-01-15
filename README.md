@@ -121,6 +121,8 @@ You are able to set additional values to an user object. This might be a oauth i
 1. `callback`[Function]: Callback-function with the arguments:
     1. `error`[Error]: Used for exceptions.
     1. `document`[Object]: User-document from mongoose-store.
+    
+
 #### getAdditionalValue(name, callback)
 Get the value set by setAdditionalValue
 
@@ -129,6 +131,7 @@ Get the value set by setAdditionalValue
 1. `callback`[Function]: Callback-function with the arguments:
     1. `error`[Error]: Used for exceptions.
     1. `document`[Object]: User-document from mongoose-store.
+
 #### authenticate(password, callback)
 The password ist hashed with a salt, so you are not able to proof the password directly. With authenticate you are able to proof the correct password. If the password is incorrect the callback throws an exception.
 
@@ -137,6 +140,7 @@ The password ist hashed with a salt, so you are not able to proof the password d
 1. `callback`[Function]: Callback-function with the arguments:
     1. `error`[Error]: Used for exceptions.
     1. `document`[Object]: User-document from mongoose-store.
+
 #### setPassword(password, callback)
 The password ist hashed with a salt, so you are not able to set the password directly. With setPassword you are able to set a password.
 
