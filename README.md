@@ -46,7 +46,7 @@ The schema and model of users are build with mongoose and has the following stru
 * `timestamp`[Object]: Timestamps:
     * `created`[Date]: Timestamp of the creation of an user.
     * `last`[Date]: Last login of a user.
-* `additional`[Object]: A place to store additional data for an user. Use `user.setAdditionalValue(name, value, cb)` to [set additional data](#setadditionalvaluename-value-callback) and `user.getAdditionalValue(name, cb)` to [get additional data](https://github.com/atd-schubert/nce-user#getadditionalvaluename-callback).
+* `additional`[Object]: A place to store additional data for an user. Use `user.setAdditionalValue(name, value, cb)` to [set additional data](#setadditionalvaluename-value-callback) and `user.getAdditionalValue(name, cb)` to [get additional data](#getadditionalvaluename-callback).
 
 ### Basic functions
 #### checkAuthentication(request, response, authCb, unauthCb, options)
@@ -85,7 +85,7 @@ Delete a user account with its internal (mongoose-object-)id.
     1. `error`[Error]: Used for exceptions.
 
 #### getUser = function(query, callback)
-Get the first user matching a query. You are also able to query to for ["additional values"](#getAdditionalValuename-callback) with "additional".
+Get the first user matching a query. You are also able to query to for ["additional values"](#getadditionalvaluename-callback) with "additional".
 
 ##### Arguments
 1. `query`[Object]: A query-object from mongoose.
