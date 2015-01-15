@@ -150,15 +150,15 @@ module.exports = function(nce){
       if(err) ext.logger.error(err);
       if(!doc) {
         var passwd = ext.config.defaultAdminPassword || crypto.randomBytes(32).toString('hex');
-        ext.logger.warn("There is no admin! Create one with password '"+passwd+"'.");
+        if(ext.logger) ext.logger.warn("There is no admin! Create one with password '"+passwd+"'.");
         var admin = {
           username:"admin",
           usergroups: ["admin"],
           password: passwd
         };
         ext.createUser(admin, function(err){
-          if(err) return ext.logger.error(err);
-          ext.logger.warn("User 'admin' created...");
+          if(err && ext.logger) return ext.logger.error(err);
+          if(ext.logger) ext.logger.warn("User 'admin' created...");
         });
       }
     });
@@ -285,7 +285,7 @@ module.exports = function(nce){
     ext.model.createUser(data, function(err, doc){
       if(err) ext.logger.error("Error while creating user '"+(data.username || data.email)+"'", err);
       else {
-        ext.logger.info("Created user '"+(doc.username || doc.email)+"'");
+        if(ext.logger) ext.logger.info("Created user '"+(doc.username || doc.email)+"'");
         ext.emit("create", doc);
       }
       return cb(err, doc);
