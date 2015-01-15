@@ -57,6 +57,9 @@ You can use this function to check for authentication.
 1. `authCb`[Function]: Callback-function if a user is granted:
     1. `error`[Error]: (Not really) used for exceptions. All exceptions goes over the unauthCb!
     1. `user`[Object]: The user-object from passport (`request.user`).
+1. `unauthCb`[Function]: Callback-function if a user is not granted:
+    1. `error`[Error]: (Really) used for exceptions.
+    1. `user`[Object]: The user-object from passport if there is one (`request.user`).
 1. `opts`[Object]: Authentication options (one of them have to match to get authenticated, if nothing is set, someone have to be logged in):
     * `id`[String, RegExp or Array]: Only allow users with a matching id.
     * `username`[String, RegExp or Array]: Only allow users with a matching username.
@@ -64,26 +67,81 @@ You can use this function to check for authentication.
     * `email`[String, RegExp or Array]: Only allow users with a matching email-address.
 
 #### createUser(data, callback)
-Create a user according to its schema with values for:
-* `name`: The (full-)name for a user (it is not possible to authenticate a user with its name!)
-* `email`: The email-address of an user
-* `username`: The username
-* `usergroups`: An array of strings representing groups for users.
+Create a user according to its [schema](#schema-of-users).
+
+##### Arguments
+1. `data`[Object]: Data according to its [schema](#schema-of-users).
+1. `callback`[Function]: Callback-function with the arguments:
+    1. `error`[Error]: Used for exceptions.
+    1. `document`[Object]: User-document from mongoose-store.
 
 #### removeUser(id, callback)
 Delete a user account with its internal (mongoose-object-)id.
+
+##### Arguments
+1. `id`[Object]: Internal id from user document (`_id`).
+1. `callback`[Function]: Callback-function with the arguments:
+    1. `error`[Error]: Used for exceptions.
+
 #### getUser = function(query, callback)
-Get the first user matching a query. You are also able to query to "additional values" with "additional".
+Get the first user matching a query. You are also able to query to for ["additional values"](#getAdditionalValuename-callback) with "additional".
+
+##### Arguments
+1. `query`[Object]: A query-object from mongoose.
+1. `callback`[Function]: Callback-function with the arguments:
+    1. `error`[Error]: Used for exceptions.
+    1. `document`[Object]: User-document from mongoose-store.
+
 #### updateUser = function(query, data, callback)
 Update user data.
+
+##### Arguments
+1. `query`[Object]: A query-object from mongoose.
+1. `data`[Object]: Data according to its [schema](#schema-of-users).
+1. `callback`[Function]: Callback-function with the arguments:
+    1. `error`[Error]: Used for exceptions.
+    1. `document`[Object]: User-document from mongoose-store.
+
 #### useStrategy = function(strategy)
-Add other strategies, like facebook or google oauth.
-### User Object
-#### setAdditionalValue(name, callback)
+Add other strategies, like facebook or google, like you [add strategies in passport](https://github.com/jaredhanson/passport#strategies) with `passport.use(strategy)`.
+
+The callback url is automatically set to the url-prefix according to the [config-settings](#config-settings) and the strategy name. For example with the default config-settings and the facebook strategy the callback-url will be: `/authcb/facebook`.
+
+
+##### Arguments
+1. `strategy`[Function]: A passport-strategy.
+
+### Methods of the user object
+#### setAdditionalValue(name, value, callback)
 You are able to set additional values to an user object. This might be a oauth information, a gpg key or an address. You are free to use this values as you and the other modules want.
+
+##### Arguments
+1. `name`[Object]: Name for a value.
+1. `data`[Object]: Saved value.
+1. `callback`[Function]: Callback-function with the arguments:
+    1. `error`[Error]: Used for exceptions.
+    1. `document`[Object]: User-document from mongoose-store.
 #### getAdditionalValue(name, callback)
 Get the value set by setAdditionalValue
+
+##### Arguments
+1. `name`[Object]: Name for a value.
+1. `callback`[Function]: Callback-function with the arguments:
+    1. `error`[Error]: Used for exceptions.
+    1. `document`[Object]: User-document from mongoose-store.
 #### authenticate(password, callback)
-The password ist hashed with a salt, so you are not able to proof the password directly. With authenticate you are able to proof the correct password.
-#### setPassword
+The password ist hashed with a salt, so you are not able to proof the password directly. With authenticate you are able to proof the correct password. If the password is incorrect the callback throws an exception.
+
+##### Arguments
+1. `password`[Object]: Unsalt-hashed password.
+1. `callback`[Function]: Callback-function with the arguments:
+    1. `error`[Error]: Used for exceptions.
+    1. `document`[Object]: User-document from mongoose-store.
+#### setPassword(password, callback)
 The password ist hashed with a salt, so you are not able to set the password directly. With setPassword you are able to set a password.
+
+##### Arguments
+1. `password`[Object]: Unsalt-hashed password.
+1. `callback`[Function]: Callback-function with the arguments:
+    1. `error`[Error]: Used for exceptions.
+    1. `document`[Object]: User-document from mongoose-store.
