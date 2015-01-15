@@ -46,7 +46,7 @@ The schema and model of users are build with mongoose and has the following stru
 * `timestamp`[Object]: Timestamps:
     * `created`[Date]: Timestamp of the creation of an user.
     * `last`[Date]: Last login of a user.
-* `additional`[Object]: A place to store additional data for an user. Use `user.setAdditionalValue(name, value, cb)` to set additional data and `user.getAdditionalValue(name, value, cb)` to get additional data.
+* `additional`[Object]: A place to store additional data for an user. Use `user.setAdditionalValue(name, value, cb)` to [set additional data](#setadditionalvaluename-value-callback) and `user.getAdditionalValue(name, cb)` to [get additional data](https://github.com/atd-schubert/nce-user#getadditionalvaluename-callback).
 
 ### Basic functions
 #### checkAuthentication(request, response, authCb, unauthCb, options)
