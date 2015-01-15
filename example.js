@@ -1,17 +1,17 @@
 "use strict";
 
 var NCE = require("nce");
-var Ext = require("./");
-
-var Logger = require("nce-winston");
-var Store = require("nce-mongoose-store");
-var Server = require("nce-server");
 var FacebookStrategy = require('passport-facebook').Strategy;
 
+var nce = new NCE({user:{defaultAdminPassword: "admin!23",logger:{level:"verbose"}}});
+var extMgr = require("nce-extension-manager")(nce);
+extMgr.activateExtension(extMgr);
+extMgr.getActivatedExtension("server");
+
 var fbs = new FacebookStrategy({
-    clientID: "768309759887321",
-    clientSecret: "50affbbb5583a725686be6a832c96314",
-    callbackURL: "http://localhost:3000/auth/facebook"
+    clientID: "-- your client id here... --",
+    clientSecret: "-- your client secret here... --",
+    callbackURL: "http://localhost:3000/authcb/facebook"
   },
   function(accessToken, refreshToken, profile, done) {
     console.log(accessToken, refreshToken, profile);
@@ -24,25 +24,7 @@ var fbs = new FacebookStrategy({
 );
 
 // Load core and insert user extension
-var nce = new NCE({user:{defaultAdminPassword: "admin!23",logger:{level:"verbose"}}});
-var ext = Ext(nce);
-
-// activate minimum required extensions
-var logger = Logger(nce);
-var store = Store(nce);
-logger.install();
-logger.activate();
-store.install();
-store.activate();
-
-// add server module to use it productive
-var server = Server(nce);
-server.install();
-server.activate();
-
-// now add the user module
-ext.install();
-ext.activate();
+var ext = extMgr.getActivatedExtension("user");
 
 var user = {
   username: "test",
