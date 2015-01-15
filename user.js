@@ -235,7 +235,7 @@ module.exports = function(nce){
         if(user.usergroups.indexOf(opts.usergroups)>=0) return authCb(null, user);
         else return unauthCb(null, user);
       } else if(Array.prototype.isPrototypeOf(opts.usergroups)) {
-        for (i=0; i<user.usergroups.length; i++) if(opts.usergroups.indexOf(user.usergroups[i])) return authCb(null, user);
+        for (i=0; i<user.usergroups.length; i++) if(opts.usergroups.indexOf(user.usergroups[i])>=0) return authCb(null, user);
         if(opts.usergroups.indexOf(user.usergroups) >= 0) return authCb(null, user);
         else return unauthCb(null, user);
       }
