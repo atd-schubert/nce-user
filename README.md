@@ -67,6 +67,23 @@ You can use this function to check for authentication.
     * `usergroups`[String, RegExp or Array]: Only allow users with a matching usergroup.
     * `email`[String, RegExp or Array]: Only allow users with a matching email-address.
 
+#### proofUser(user, opts, authCb, unauthCb)
+Proof for a user like `checkAuthentication` but without request and response, but also without login form (just proof).
+
+##### Arguments
+1. `user`[Object]: A valid user object (for example from `request.user`).
+1. `opts`[Object]: Authentication options (one of them have to match to get authenticated, if nothing is set, someone have to be logged in):
+    * `id`[String, RegExp or Array]: Only allow users with a matching id.
+    * `username`[String, RegExp or Array]: Only allow users with a matching username.
+    * `usergroups`[String, RegExp or Array]: Only allow users with a matching usergroup.
+    * `email`[String, RegExp or Array]: Only allow users with a matching email-address.
+1. `authCb`[Function]: Callback-function if a user is granted:
+    1. `error`[Error]: (Not really) used for exceptions. All exceptions goes over the unauthCb!
+    1. `user`[Object]: The user-object from passport (`request.user`).
+1. `unauthCb`[Function]: Callback-function if a user is not granted:
+    1. `error`[Error]: (Really) used for exceptions.
+    1. `user`[Object]: The user-object from passport if there is one (`request.user`).
+
 #### createUser(data, callback)
 Create a user according to its [schema](#schema-of-users).
 
@@ -84,7 +101,7 @@ Delete a user account with its internal (mongoose-object-)id.
 1. `callback`[Function]: Callback-function with the arguments:
     1. `error`[Error]: Used for exceptions.
 
-#### getUser = function(query, callback)
+#### getUser(query, callback)
 Get the first user matching a query. You are also able to query to for ["additional values"](#getadditionalvaluename-callback) with "additional".
 
 ##### Arguments
@@ -93,7 +110,7 @@ Get the first user matching a query. You are also able to query to for ["additio
     1. `error`[Error]: Used for exceptions.
     1. `document`[Object]: User-document from mongoose-store.
 
-#### updateUser = function(query, data, callback)
+#### updateUser(query, data, callback)
 Update user data.
 
 ##### Arguments
@@ -103,7 +120,7 @@ Update user data.
     1. `error`[Error]: Used for exceptions.
     1. `document`[Object]: User-document from mongoose-store.
 
-#### useStrategy = function(strategy)
+#### useStrategy(strategy)
 Add other strategies, like facebook or google, like you [add strategies in passport](https://github.com/jaredhanson/passport#strategies) with `passport.use(strategy)`.
 
 The callback url is automatically set to the url-prefix according to the [config-settings](#config-settings) and the strategy name. For example with the default config-settings and the facebook strategy the callback-url will be: `/authcb/facebook`.

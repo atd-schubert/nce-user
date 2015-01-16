@@ -1,6 +1,6 @@
 {
   "name": "nce-user",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A user extension for nce build with passport",
   "main": "user.js",
   "scripts": {

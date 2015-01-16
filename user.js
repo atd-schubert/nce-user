@@ -276,6 +276,9 @@ module.exports = function(nce){
       else return unauthCb();
     }
   };
+  ext.proofUser = function(user, opts, authCb, unauthCb) {
+    return proofUser(user, opts, authCb, unauthCb);
+  };
   ext.logout = function(req){ // use req.logout directly!
     req.logout();
   };
