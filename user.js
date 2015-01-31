@@ -210,38 +210,43 @@ module.exports = function(nce){
     });
   };
 
+  var hasNoRule = function(rule){
+    if(!rule) return true;
+    if(Array.prototype.isPrototypeOf(rule) && rule.length === 0) return true;
+    return false;
+  };
   var hasAccess = function(user, settings){
-    if(settings.id) {
+    var i;
+    settings = settings || {};
+    if(hasNoRule(settings.id) && hasNoRule(settings.email) && hasNoRule(settings.username) && hasNoRule(settings.usergroups)) return true;
+    if(!user) return false;
+    
+    if(!hasNoRule(settings.id) && user._id) {
       if(RegExp.prototype.isPrototypeOf(settings.id) && settings.id.test(user._id.toString())) return true;
       else if(typeof settings.id === "string" && settings.id === user._id.toString()) return true;
       else if(Array.prototype.isPrototypeOf(settings.id) && settings.id.indexOf(user._id.toString()) >= 0) return true;
     }
-    if(settings.username) {
+    if(!hasNoRule(settings.username) && user.username) {
       if(RegExp.prototype.isPrototypeOf(settings.username) && settings.username.test(user.username)) return true;
       else if(typeof settings.username === "string" && settings.username === user.username) return true;
       else if(Array.prototype.isPrototypeOf(settings.username) && settings.username.indexOf(user.username) >= 0) return true;
     }
-    if(settings.email) {
+    if(!hasNoRule(settings.email) && user.email) {
       if(RegExp.prototype.isPrototypeOf(settings.email) && settings.email.test(user.email)) return true;
       else if(typeof settings.email === "string" && settings.email === user.email) return true;
       else if(Array.prototype.isPrototypeOf(settings.email) && settings.email.indexOf(user.email) >= 0) return true;
     }
-    if(settings.usergroups) {
+    if(!hasNoRule(settings.usergroups) && user.usergroups) {
       if(RegExp.prototype.isPrototypeOf(settings.usergroups)) {
-        var i;
         for (i=0; i<user.usergroups.length; i++) if(settings.usergroups.test(user.usergroups[i])) return true;
-        return false;
       } else if(typeof settings.usergroups === "string") {
         if(user.usergroups.indexOf(settings.usergroups)>=0) return true;
-        else return false;
       } else if(Array.prototype.isPrototypeOf(settings.usergroups)) {
         for (i=0; i<user.usergroups.length; i++) if(settings.usergroups.indexOf(user.usergroups[i])>=0) return true;
         if(settings.usergroups.indexOf(user.usergroups) >= 0) return true;
-        else return false;
       }
     }
-    if(settings.id || settings.username || settings.email || settings.usergroups) return false;
-    return true;
+    return false;
   };
 
   var proofUser = function(user, settings, authCb, unauthCb) {
