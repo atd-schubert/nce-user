@@ -157,6 +157,21 @@ describe('Middleware methods and authentication', function(){
       res.end("not authenticated");
     });
     
+    if(req.url === "/noAuth") ext.checkAuthentication(req, res, function(err, user){
+      res.writeHead(200, {"content-type": "text/plain"});
+      res.end("authenticated");
+    }, function(err, user){
+      res.writeHead(200, {"content-type": "text/plain"});
+      res.end("not authenticated");
+    });
+    if(req.url === "/getUsername") ext.checkAuthentication(req, res, function(err, user){
+      res.writeHead(200, {"content-type": "text/plain"});
+      res.end(req.user.username);
+    }, function(err, user){
+      res.writeHead(403, {"content-type": "text/plain"});
+      res.end("not authenticated");
+    });
+    
     //: Allowed for user
     if(req.url === "/onlyEnhanced/string") ext.checkAuthentication(req, res, function(err, user){
       res.writeHead(200, {"content-type": "text/plain"});
@@ -240,6 +255,11 @@ describe('Middleware methods and authentication', function(){
   var otherUser = {username: "other", usergroups: ["last"], email:"other@was.de"};
   
   describe('Generally authentication', function(){
+    it('should be authenticated generally if settings left undefined', function(done){
+      nce.middleware({url:"/noAuth"}, {end:function(str){if(str === "not authenticated") return done(); done(new Error("wrong status"))}, writeHead:function(code, headers){}, write:function(){}}, function(req, res){
+        done(new Error("Called unallowed next"));
+      });
+    });
     it('should be unauthenticated generally', function(done){
       nce.middleware({url:"/getStatus"}, {end:function(str){if(str === "not authenticated") return done(); done(new Error("wrong status"))}, writeHead:function(code, headers){}, write:function(){}}, function(req, res){
         done(new Error("Called unallowed next"));
@@ -289,7 +309,6 @@ describe('Middleware methods and authentication', function(){
     });
   });
   
-  
   describe('Authentication by usergroup', function(){
     it('should authenticate usergroup "first" by string', function(done){
       nce.middleware({user: enhancedUser, url:"/onlyFirst/string"}, {end:function(str){}, writeHead:function(code, headers){if(code === 200) return done(); done(new Error("Not authenticated by "));}, write:function(){}}, function(req, res){
@@ -325,7 +344,6 @@ describe('Middleware methods and authentication', function(){
       });
     });
   });
-  
   
   describe('Authentication by email', function(){
     it('should authenticate user with email "test@test.tdl" by string', function(done){

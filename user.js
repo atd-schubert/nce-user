@@ -210,38 +210,48 @@ module.exports = function(nce){
     });
   };
 
-  var proofUser = function(user, opts, authCb, unauthCb) {
-    if(opts.id) {
-      if(RegExp.prototype.isPrototypeOf(opts.id) && opts.id.test(user._id.toString())) return authCb(null, user);
-      else if(typeof opts.id === "string" && opts.id === user._id.toString()) return authCb(null, user);
-      else if(Array.prototype.isPrototypeOf(opts.id) && opts.id.indexOf(user._id.toString()) >= 0) return authCb(null, user);
+  var hasAccess = function(user, settings){
+    if(settings.id) {
+      if(RegExp.prototype.isPrototypeOf(settings.id) && settings.id.test(user._id.toString())) return true;
+      else if(typeof settings.id === "string" && settings.id === user._id.toString()) return true;
+      else if(Array.prototype.isPrototypeOf(settings.id) && settings.id.indexOf(user._id.toString()) >= 0) return true;
     }
-    if(opts.username) {
-      if(RegExp.prototype.isPrototypeOf(opts.username) && opts.username.test(user.username)) return authCb(null, user);
-      else if(typeof opts.username === "string" && opts.username === user.username) return authCb(null, user);
-      else if(Array.prototype.isPrototypeOf(opts.username) && opts.username.indexOf(user.username) >= 0) return authCb(null, user);
+    if(settings.username) {
+      if(RegExp.prototype.isPrototypeOf(settings.username) && settings.username.test(user.username)) return true;
+      else if(typeof settings.username === "string" && settings.username === user.username) return true;
+      else if(Array.prototype.isPrototypeOf(settings.username) && settings.username.indexOf(user.username) >= 0) return true;
     }
-    if(opts.email) {
-      if(RegExp.prototype.isPrototypeOf(opts.email) && opts.email.test(user.email)) return authCb(null, user);
-      else if(typeof opts.email === "string" && opts.email === user.email) return authCb(null, user);
-      else if(Array.prototype.isPrototypeOf(opts.email) && opts.email.indexOf(user.email) >= 0) return authCb(null, user);
+    if(settings.email) {
+      if(RegExp.prototype.isPrototypeOf(settings.email) && settings.email.test(user.email)) return true;
+      else if(typeof settings.email === "string" && settings.email === user.email) return true;
+      else if(Array.prototype.isPrototypeOf(settings.email) && settings.email.indexOf(user.email) >= 0) return true;
     }
-    if(opts.usergroups) {
-      if(RegExp.prototype.isPrototypeOf(opts.usergroups)) {
+    if(settings.usergroups) {
+      if(RegExp.prototype.isPrototypeOf(settings.usergroups)) {
         var i;
-        for (i=0; i<user.usergroups.length; i++) if(opts.usergroups.test(user.usergroups[i])) return authCb(null, user);
-        return unauthCb(null, user);
-      } else if(typeof opts.usergroups === "string") {
-        if(user.usergroups.indexOf(opts.usergroups)>=0) return authCb(null, user);
-        else return unauthCb(null, user);
-      } else if(Array.prototype.isPrototypeOf(opts.usergroups)) {
-        for (i=0; i<user.usergroups.length; i++) if(opts.usergroups.indexOf(user.usergroups[i])>=0) return authCb(null, user);
-        if(opts.usergroups.indexOf(user.usergroups) >= 0) return authCb(null, user);
-        else return unauthCb(null, user);
+        for (i=0; i<user.usergroups.length; i++) if(settings.usergroups.test(user.usergroups[i])) return true;
+        return false;
+      } else if(typeof settings.usergroups === "string") {
+        if(user.usergroups.indexOf(settings.usergroups)>=0) return true;
+        else return false;
+      } else if(Array.prototype.isPrototypeOf(settings.usergroups)) {
+        for (i=0; i<user.usergroups.length; i++) if(settings.usergroups.indexOf(user.usergroups[i])>=0) return true;
+        if(settings.usergroups.indexOf(user.usergroups) >= 0) return true;
+        else return false;
       }
     }
-    if(opts.id || opts.username || opts.email || opts.usergroups) return unauthCb(null, user);
-    return authCb(null, user);
+    if(settings.id || settings.username || settings.email || settings.usergroups) return false;
+    return true;
+  };
+
+  var proofUser = function(user, settings, authCb, unauthCb) {
+    var emptyFn = function(){};
+    authCb = authCb || emptyFn;
+    unauthCb = unauthCb || emptyFn;
+    var condition = hasAccess(user, settings);
+    if(condition) authCb(null, user);
+    else unauthCb(null, user);
+    return condition;
   };
 
 //# Public declarations and exports:
@@ -275,6 +285,9 @@ module.exports = function(nce){
       }
       else return unauthCb();
     }
+  };
+  ext.hasAccess = function(user, settings) {
+    return hasAccess(user, settings);
   };
   ext.proofUser = function(user, opts, authCb, unauthCb) {
     return proofUser(user, opts, authCb, unauthCb);
